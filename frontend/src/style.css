@@ -1,0 +1,21 @@
+:root, body, #app {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #f2f3f5; /* 给背景一个淡灰色，这样你能看清"白色对话框"的固定宽度 */
+    color: #333;
+}
+
+.markdown-body pre {
+    background-color: #282c34 !important;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
