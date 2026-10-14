@@ -1,0 +1,76 @@
+#!/bin/bash
+# ============================================================
+#  DeepSeek 智能问答助手 —— 一键启停工具
+#  安装位置：/usr/local/bin/dsctl
+#  用法：dsctl {start|stop|restart|status|log|passwd <新密码>}
+# ============================================================
+APP=/opt/deepseekproject
+D=$APP/deploy
+HTPASSWD=/etc/nginx/.htpasswd_deepseek
+SITE=/etc/nginx/conf.d/deepseek.conf
+
+case "$1" in
+  start)
+    cp $D/nginx/deepseek.conf $SITE
+    nginx -t -q && systemctl reload nginx
+    systemctl enable deepseek -q 2>/dev/null
+    systemctl start deepseek
+    sleep 3
+    echo "==================== 已启动 ===================="
+    echo "  站点已对外开放，访问需要网关账号密码"
+    echo "================================================"
+    dsctl status
+    ;;
+  stop)
+    systemctl stop deepseek
+    systemctl disable deepseek -q 2>/dev/null
+    cp $D/nginx/deepseek-maintenance.conf $SITE
+    nginx -t -q && systemctl reload nginx
+    echo "==================== 已停止 ===================="
+    echo "  站点显示「服务已暂停」"
+    echo "  API 额度不会再被消耗，服务器重启也不会自动拉起"
+    echo "================================================"
+    ;;
+  restart)
+    systemctl restart deepseek && echo "应用已重启"
+    ;;
+  status)
+    if grep -q maintenance $SITE; then M="已停止 (维护页)"; else M="运行中"; fi
+    echo "-----------------------------------------------"
+    echo "  站点模式 : $M"
+    echo "  应用服务 : $(systemctl is-active deepseek)"
+    echo "  开机自启 : $(systemctl is-enabled deepseek 2>/dev/null || echo disabled)"
+    echo "  Nginx    : $(systemctl is-active nginx)"
+    echo "  MySQL    : $(systemctl is-active mysqld)"
+    echo "  网关用户 : $(cut -d: -f1 $HTPASSWD 2>/dev/null | head -1)"
+    echo -n "  系统内存 : "; free -m | awk '/Mem:/{printf "%s / %s MB\n", $3, $2}'
+    P=$(pgrep -f "uvicorn app.main:app" | head -1)
+    if [ -n "$P" ]; then
+      echo -n "  应用内存 : "; ps -o rss= -p $P | awk '{printf "%.0f MB\n", $1/1024}'
+    else
+      echo "  应用内存 : - (未运行)"
+    fi
+    echo "-----------------------------------------------"
+    ;;
+  log)
+    tail -n ${2:-50} /var/log/deepseek.log
+    ;;
+  passwd)
+    if [ -z "$2" ]; then echo "用法: dsctl passwd <新密码>"; exit 1; fi
+    $APP/.venv/bin/python -c \
+      "import crypt,sys;h=crypt.crypt(sys.argv[1],crypt.mksalt(crypt.METHOD_SHA512));\
+u=open('$HTPASSWD').read().strip().split(':',1)[0];\
+open('$HTPASSWD','w').write(u+':'+h+chr(10));print('网关密码已更新')" "$2"
+    chmod 640 $HTPASSWD
+    ;;
+  *)
+    echo "DeepSeek 助手 一键启停工具"
+    echo ""
+    echo "  dsctl start            启动服务（对外可访问）"
+    echo "  dsctl stop             停止服务（显示维护页，不消耗 API）"
+    echo "  dsctl restart          只重启后端应用"
+    echo "  dsctl status           查看运行状态"
+    echo "  dsctl log [行数]        查看应用日志"
+    echo "  dsctl passwd <新密码>   修改访问网关密码"
+    ;;
+esac

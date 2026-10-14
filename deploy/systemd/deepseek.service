@@ -1,0 +1,23 @@
+# DeepSeek 智能问答助手 —— systemd 服务单元
+# 安装位置：/etc/systemd/system/deepseek.service
+# 启用：systemctl daemon-reload && systemctl enable --now deepseek
+
+[Unit]
+Description=DeepSeek Assistant (FastAPI)
+After=network.target mysqld.service
+Wants=mysqld.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/deepseekproject/backend
+Environment=PYTHONUNBUFFERED=1
+# 只监听 127.0.0.1，不对外暴露，外部流量统一由 Nginx 进入
+ExecStart=/opt/deepseekproject/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+Restart=always
+RestartSec=3
+StandardOutput=append:/var/log/deepseek.log
+StandardError=append:/var/log/deepseek.log
+
+[Install]
+WantedBy=multi-user.target
