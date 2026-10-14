@@ -6,16 +6,16 @@
 
 | 用途 | 地址 |
 | --- | --- |
-| 应用首页 | http://121.43.127.223 |
-| 接口文档 | http://121.43.127.223/docs |
-| 健康检查 | http://121.43.127.223/api/health |
-| 健康探针（Nginx） | http://121.43.127.223/healthz |
+| 应用首页 | http://YOUR_SERVER_IP |
+| 接口文档 | http://YOUR_SERVER_IP/docs |
+| 健康检查 | http://YOUR_SERVER_IP/api/health |
+| 健康探针（Nginx） | http://YOUR_SERVER_IP/healthz |
 
 ## 二、服务器信息
 
 | 项目 | 值 |
 | --- | --- |
-| 公网 IP | 121.43.127.223 |
+| 公网 IP | YOUR_SERVER_IP |
 | 主机名 | sayhello |
 | 系统 | Alibaba Cloud Linux 3 (OpenAnolis Edition)，内核 5.10 |
 | CPU / 内存 | 2 核 / 1.8 GB（另有 4 GB swap） |
@@ -80,7 +80,7 @@ free -h && ps aux | grep uvicorn
 ```bash
 # 1. 本机重新打包（或在服务器上直接改）
 # 2. 上传
-scp deploy.tar.gz root@121.43.127.223:/tmp/
+scp deploy.tar.gz root@YOUR_SERVER_IP:/tmp/
 # 3. 解压覆盖
 cd /opt/deepseekproject && tar -xzf /tmp/deploy.tar.gz
 # 4. 重启服务
